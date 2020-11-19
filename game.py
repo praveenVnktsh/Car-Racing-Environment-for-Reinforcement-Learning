@@ -6,8 +6,10 @@ import numpy as np
 import math
 
 
-class Car:
-    def __init__(self, x, y, angle=30.0, length=4, max_steering=90, max_acceleration=0.05):
+class Car(pygame.sprite.Sprite):
+    def __init__(self, x, y, index, angle=0.0, length=16, max_steering=90, max_acceleration=0.05, ):
+        super().__init__()
+        self.index = index
         self.position = Vector2(x, y)
         self.velocity = Vector2(0.0, 0.0)
         self.angle = angle
@@ -20,10 +22,28 @@ class Car:
         self.acceleration = 0.0
         self.steering = 0.0
         self.braking = 0.0
+        self.distanceToSee = 150
+        self.state = [0.0, 0.0, 0.0 ]
 
-        self.laserIntersections = [(self.position.x, self.position.y), (self.position.x, self.position.y), (self.position.x, self.position.y), (self.position.x, self.position.y), (self.position.x, self.position.y)]
+        self.image_car = pygame.image.load(carImagePath).convert_alpha()
+        self.image = self.image_car
+        self.image_clean = self.image
+        self.rect = self.image.get_rect()
+        self.image = pygame.transform.rotate(self.image_clean, self.angle)
+        self.rect = self.image.get_rect(center=self.rect.center)
 
-    def update(self):
+        self.anglesToSee = [-50, -25, 0, 25, 50]
+        
+        
+
+        self.laserDistances = [(self.position.x, self.position.y), (self.position.x, self.position.y), (self.position.x, self.position.y), (self.position.x, self.position.y), (self.position.x, self.position.y)]
+
+    def update(self, action):
+
+        self.steering     = action[self.index][0]*self.max_steering
+        self.acceleration = action[self.index][1]*self.max_acceleration
+        self.braking      = action[self.index][2]*self.max_braking
+
         self.velocity += (self.acceleration - self.braking - self.free_deceleration , 0)
         self.velocity.x = max(0, min(self.velocity.x, self.max_velocity))
         if self.steering:
@@ -34,75 +54,78 @@ class Car:
 
         self.position += self.velocity.rotate(-self.angle)
         self.angle += degrees(angular_velocity)
+        
+        
+
+        self.image = pygame.transform.rotate(self.image_clean, self.angle)
+    
+    def draw(self, surface):
+        
+        for angleOffset in self.anglesToSee:
+            for j in range(self.distanceToSee):
+                loc = (int(self.position.x + j*math.cos((self.angle + angleOffset)*3.14/180)), int(self.position.y - j*math.sin((self.angle + angleOffset)*3.14/180)))
+                pixel = trackImage.get_at(loc)
+                surface.fill((255, 255, 255), (loc, (1, 1)))
+                if pixel[3] != 187:
+                    break
+        x, y = self.position.x, self.position.y
+        x -= int(self.image.get_rect().width/2  + self.length*(math.cos(self.angle*3.14/180)))
+        y -= int(self.image.get_rect().height/2 - self.length*(math.sin(self.angle*3.14/180)))
+
+        surface.blit(self.image, (x , y))
+        
+
 
         
 
 def initVars():
-    global current_dir, trackPath, trackImage
-
+    global current_dir, trackPath, trackImage, carImagePath, screen
+    width = 1000
+    height = 750
+    pygame.init()  
+    screen = pygame.display.set_mode((width, height))
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    trackPath = "data/track.png"
+    trackPath = os.path.join(current_dir, "data/track.png")
     trackImage = pygame.image.load(trackPath).convert_alpha()
+    carImagePath = os.path.join(current_dir, "data/car.png")
+    
 
 class Game:
     def __init__(self):
-        pygame.init()   
-        width = 1000
-        height = 750
-        self.screen = pygame.display.set_mode((width, height))
         self.exit = False
-        initVars()
-        
-        carImagePath = "data/car.png"        
-        self.car_image = pygame.image.load(carImagePath).convert_alpha()
-        
-        
-        self.numberOfCars = 3
-        self.cars = []
+        self.numberOfCars = 5
+        self.cars = pygame.sprite.Group()
         for i in range(self.numberOfCars):
-            self.cars.append(Car(200,350))
+            self.cars.add(Car(200,350, index = i))
         self.draw()
+
 
     def step(self, action, render = True):
        
         
-        # while not self.exit:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit()
 
-        for i in range(self.numberOfCars):
-            self.cars[i].steering     = action[i][0]*self.cars[i].max_steering
-            self.cars[i].acceleration = action[i][1]*self.cars[i].max_acceleration
-            self.cars[i].braking      = action[i][2]*self.cars[i].max_braking
-            self.cars[i].update()
+        self.cars.update(action)
+
         
         if render:
             self.draw()
         
-        # Drawing
         
     def draw(self):
-        self.screen.fill((0, 0, 0))
-        self.screen.blit(trackImage, Vector2(0, 0))
-
-        for i in range(self.numberOfCars):
-            for angleOffset in [-40, -20, 0, 20, 40]:
-                for j in range(100):
-                    loc = (int(self.cars[i].position.x + j*math.cos((self.cars[i].angle + angleOffset)*3.14/180)), int(self.cars[i].position.y - j*math.sin((self.cars[i].angle + angleOffset)*3.14/180)))
-                    pixel = trackImage.get_at(loc)
-                    self.screen.fill((angleOffset*3 + 120, 255, 255), (loc, (1, 1)))
-                    if pixel[3] != 187:
-                        break
-            rotated = pygame.transform.rotate(self.car_image, self.cars[i].angle)
-            self.screen.blit(rotated, self.cars[i].position)# * self.ppu - (rect.width / 2, rect.height / 2))
+        screen.fill((0, 0, 0))
+        screen.blit(trackImage, Vector2(0, 0))
+        for car in self.cars:
+            car.draw(screen)
         pygame.display.flip()
         
-            # self.clock.tick(self.ticks)
  
 
 
 if __name__ == '__main__':
+    initVars()
     game = Game()
     action = [0.0, 0.0, 0.0]
     
@@ -111,9 +134,9 @@ if __name__ == '__main__':
         i += 1 
         # action = np.zeros( (game.numberOfCars, 3))
         action = np.random.randn(game.numberOfCars, 3)
-        # action[:, 0] *= 2
-        # action[:, 0] -=0.5
-        action[:, 1] = 1.0
+        action[:, 0] *= 2
+        action[:, 0] -=0.5
+        # action[:, 1] = 1.0
         # action = [1.0, 1.0, 0.5]
         game.step(action)
     pygame.quit()
