@@ -6,6 +6,10 @@ Set up your configurations in the config.py file, and use however you want :)
 
 This environment is made to closely replicate the CarRacing-v0 Environment in OpenAI gym. However, since that environment doesn't support multiple instances of cars, I decided to make my own!
 
+## Demo
+
+![](demo.gif)
+Random Agent on the environment.
 
 ## Making a new map
 

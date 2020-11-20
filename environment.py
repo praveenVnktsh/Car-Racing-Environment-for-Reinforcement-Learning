@@ -5,7 +5,6 @@ import numpy as np
 from config import Args, configure
 import time
 
-
 class Environment:
     def __init__(self, config:Args, trackImage):
         self.exit = False
@@ -51,7 +50,7 @@ class Environment:
                 self.cameraPosition.y = car.position.y - self.config.cameraHeight//2
             i += 1
         
-        if len(self.cameraPositions) > 1000:
+        if len(self.cameraPositions) > 200:
             self.cameraPositions.pop(0)
         self.cameraPositions.append((self.cameraPosition.x, self.cameraPosition.y))
         mean = np.mean(self.cameraPositions, 0)
@@ -62,8 +61,18 @@ class Environment:
         
         return state, dead, rewards
         
+    def reset(self):
+        self.cars = pygame.sprite.Group()
+        self.cameraPosition = Vector2(configs.startingPositionX - configs.cameraHeight//2,configs.startingPositionY - configs.cameraHeight//2)
+        self.cameraPositions = []
+        self.cameraPositions.append((self.cameraPosition.x, self.cameraPosition.y))
+
+        for i in range(self.config.numberOfCars):
+            self.cars.add(Car(configs.startingPositionX , configs.startingPositionY, index = i, configs = self.config, trackImage=  trackImage))
         
-        
+        self.draw()
+
+    
     def draw(self):
         screen.fill(configs.bgColor)
         cropRect = (self.cameraPosition.x, self.cameraPosition.y, self.config.cameraHeight, self.config.cameraHeight)
@@ -82,11 +91,15 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode((configs.cameraHeight, configs.cameraHeight))
     trackImage = pygame.image.load(configs.trackPath).convert_alpha()
     
-    
-    game = Environment(configs, trackImage)
-    
+
+    env = Environment(configs, trackImage)
     while True:
         action = np.random.randn(configs.numberOfCars, 3)
         
-        game.step(action, render = configs.render)
+        state, dead, rewards = env.step(action, render = configs.render)
+
+        if 0.0 not in dead:
+            time.sleep(2)
+            env.reset()
+
     
