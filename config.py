@@ -7,11 +7,14 @@ class Args():
 
     def __init__(self):
         self.numberOfLasers = 5
-        self.numberOfCars = 100
+        self.numberOfCars = 20
         self.carImagePath = "data/car.png"
         self.trackPath = "data/track.png"
-        self.width = 1000
-        self.height = 750
+        self.startingPositionX = 118
+        self.startingPositionY = 435
+        self.cameraHeight = 300
+        self.width = 1500
+        self.height = 1500
 
 
     def getParamsDict(self):
