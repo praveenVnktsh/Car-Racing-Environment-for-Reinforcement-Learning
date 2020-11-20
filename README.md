@@ -9,6 +9,7 @@ This environment is made to closely replicate the CarRacing-v0 Environment in Op
 ## Demo
 
 ![](demo.gif)
+
 Random Agent on the environment.
 
 ## Making a new map
