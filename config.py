@@ -13,8 +13,17 @@ class Args():
         self.startingPositionX = 118
         self.startingPositionY = 435
         self.cameraHeight = 300
+        
         self.width = 1500
+        self.bgColor = (120, 120, 120)
         self.height = 1500
+        self.render = True
+        self.anglesToSee = [-50, -25, 0, 25, 50]
+
+        self.maxSteering = 45
+        self.maxAcceleration = 0.1
+        self.maxVelocity = 0.5
+        self.freeDeceleration = 0.03
 
 
     def getParamsDict(self):

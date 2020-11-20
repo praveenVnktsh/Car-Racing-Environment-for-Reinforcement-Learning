@@ -7,7 +7,7 @@ import numpy as np
 
  
 class Car(pygame.sprite.Sprite):
-    def __init__(self, x, y, configs: Args, index,  trackImage, angle=90.0, length=16, max_steering=45, max_acceleration=0.1,  ):
+    def __init__(self, x, y, configs: Args, index,  trackImage, angle=90.0,  ):
         super().__init__()
         self.index = index
         self.trackImage = trackImage
@@ -15,21 +15,23 @@ class Car(pygame.sprite.Sprite):
         self.carTopPosition = Vector2(x, y)
         self.lastPosition = Vector2(x, y)
         self.velocity = Vector2(0.0, 0.0)
-        self.angle = angle
-        self.length = length
-        self.max_acceleration = max_acceleration
-        self.max_steering = max_steering
-        self.max_velocity = 0.5
-        self.max_braking = max_acceleration
-        self.free_deceleration = 0.03
-        self.acceleration = 0.0
+
+
         self.configs = configs
+        self.angle = angle
+        self.length = 16
+        self.maxAcceleration = configs.maxAcceleration
+        self.maxSteering = configs.maxSteering
+        self.maxVelocity = configs.maxVelocity
+        self.max_braking = configs.maxAcceleration
+        self.freeDeceleration = configs.freeDeceleration
+
+
+        self.acceleration = 0.0
         self.steering = 0.0
         self.braking = 0.0
         self.distanceToSee = 150
-        self.state = [0.0, 0.0, 0.0 ]
 
-        self.ticks = 0
         self.distance = 0
         self.reward = 0
 
@@ -38,11 +40,7 @@ class Car(pygame.sprite.Sprite):
         self.image_clean = self.image
         self.image = pygame.transform.rotate(self.image_clean, self.angle)
 
-        self.anglesToSee = [-50, -25, 0, 25, 50]
-
         self.dead = False
-        
-        
 
         self.laserDistances = [0.0, 0.0, 0.0, 0.0, 0.0]
         self.pointsToMark = []
@@ -57,12 +55,12 @@ class Car(pygame.sprite.Sprite):
 
     def update(self, action, surface):
         if not self.dead:
-            self.steering     = action[self.index][0]*self.max_steering
-            self.acceleration = action[self.index][1]*self.max_acceleration
+            self.steering     = action[self.index][0]*self.maxSteering
+            self.acceleration = action[self.index][1]*self.maxAcceleration
             self.braking      = action[self.index][2]*self.max_braking
 
-            self.velocity += (self.acceleration - self.braking - self.free_deceleration , 0)
-            self.velocity.x = max(0, min(self.velocity.x, self.max_velocity))
+            self.velocity += (self.acceleration - self.braking - self.freeDeceleration , 0)
+            self.velocity.x = max(0, min(self.velocity.x, self.maxVelocity))
             if self.steering:
                 turning_radius = self.length / math.sin(math.radians(self.steering))
                 angular_velocity = self.velocity.x / turning_radius
@@ -80,8 +78,8 @@ class Car(pygame.sprite.Sprite):
             
             self.pointsToMark = []
 
-            for i in range(len(self.anglesToSee)):
-                angleOffset = self.anglesToSee[i]
+            for i in range(len(self.configs.anglesToSee)):
+                angleOffset = self.configs.anglesToSee[i]
                 pixel = None
                 low = 0
                 high = self.distanceToSee
@@ -89,7 +87,6 @@ class Car(pygame.sprite.Sprite):
                 while low <= high:
                     midJ = (low + high)//2
                     pixel = self.getPixelAt(midJ, angleOffset)
-                    # print(pixel)
                     if pixel[3] == 0:
                         low = midJ + 1
                     else:

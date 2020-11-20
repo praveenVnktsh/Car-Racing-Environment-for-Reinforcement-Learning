@@ -12,7 +12,6 @@ class Environment:
         
         self.cars = pygame.sprite.Group()
         self.cameraPosition = Vector2(configs.startingPositionX - configs.cameraHeight//2,configs.startingPositionY - configs.cameraHeight//2)
-        # self.nextcameraPosition = Vector2(0,0)
         self.cameraPositions = []
         self.cameraPositions.append((self.cameraPosition.x, self.cameraPosition.y))
         
@@ -66,7 +65,7 @@ class Environment:
         
         
     def draw(self):
-        screen.fill((128, 159, 116))
+        screen.fill(configs.bgColor)
         cropRect = (self.cameraPosition.x, self.cameraPosition.y, self.config.cameraHeight, self.config.cameraHeight)
         screen.blit(trackImage,(0,0),cropRect)
         for car in self.cars:
@@ -85,15 +84,9 @@ if __name__ == '__main__':
     
     
     game = Environment(configs, trackImage)
-    action = [0.0, 0.0, 0.0]
     
-    startTime = time.time()
     while True:
-        action = np.random.randn(configs.numberOfCars, 3)/10
-        # action[:, 0] *=-2
-        # action[:, 0] += 1.0
-        # action = np.zeros((configs.numberOfCars, 3))
-        # action[:, 1] = 1.0
+        action = np.random.randn(configs.numberOfCars, 3)
         
-        game.step(action, render = True)
+        game.step(action, render = configs.render)
     
