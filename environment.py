@@ -51,7 +51,7 @@ class Environment:
                 self.cameraPosition.y = car.position.y - self.config.cameraHeight//2
             i += 1
         
-        if len(self.cameraPositions) > 50:
+        if len(self.cameraPositions) > 1000:
             self.cameraPositions.pop(0)
         self.cameraPositions.append((self.cameraPosition.x, self.cameraPosition.y))
         mean = np.mean(self.cameraPositions, 0)
