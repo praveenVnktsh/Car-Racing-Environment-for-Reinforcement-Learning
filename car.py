@@ -5,7 +5,7 @@ from config import Args
 import math
 import numpy as np
 
-
+ 
 class Car(pygame.sprite.Sprite):
     def __init__(self, x, y, configs: Args, index,  trackImage, angle=0.0, length=16, max_steering=90, max_acceleration=0.1,  ):
         super().__init__()
@@ -45,6 +45,13 @@ class Car(pygame.sprite.Sprite):
         
 
         self.laserDistances = [0.0, 0.0, 0.0, 0.0, 0.0]
+        self.pointsToMark = []
+
+    def getPixelAt(self, dist, angleOffset):
+        loc = (int(self.position.x + dist*math.cos((self.angle + angleOffset)*3.14/180)), int(self.position.y - dist*math.sin((self.angle + angleOffset)*3.14/180)))
+        return self.trackImage.get_at(loc)
+
+
 
     def update(self, action, surface):
         if not self.dead:
@@ -63,25 +70,40 @@ class Car(pygame.sprite.Sprite):
             self.position += self.velocity.rotate(-self.angle)
             self.angle += math.degrees(angular_velocity)
             self.image = pygame.transform.rotate(self.image_clean, self.angle)
-
+            self.pointsToMark = []
             for i in range(len(self.anglesToSee)):
                 angleOffset = self.anglesToSee[i]
                 pixel = None
-                for j in range(self.distanceToSee):
-                    loc = (int(self.position.x + j*math.cos((self.angle + angleOffset)*3.14/180)), int(self.position.y - j*math.sin((self.angle + angleOffset)*3.14/180)))
-                    pixel = self.trackImage.get_at(loc)
-                    # surface.fill((255, 255, 255), (loc, (1, 1)))
-                    if pixel[3] != 187:
+
+                low = 0
+                high = self.distanceToSee
+                while low <= high:
+                    midJ = (low + high)//2
+                    pixel = self.getPixelAt(midJ, angleOffset)
+                    # 
+                    if pixel[3] == 187:
+                        low = midJ + 1
+                    else:
+                        high = midJ - 1
+                        
+                    if abs(low - high) <= 2:
+                        loc = (int(self.position.x + low*math.cos((self.angle + angleOffset)*3.14/180)), int(self.position.y - low*math.sin((self.angle + angleOffset)*3.14/180)))
                         dist = np.linalg.norm(np.array(loc) - np.array(self.position))
                         self.laserDistances[i] = dist
+                        # self.pointsToMark.append(self.position)
+                        self.pointsToMark.append(loc)
                         break
+
                 if pixel[3] == 187:
                     self.laserDistances[i] = self.distanceToSee
 
-            if sum(self.laserDistances) < 50:
-                self.dead = True
-                self.reward -= 10
-
+            # if sum(self.laserDistances) < 50:
+            #     self.dead = True
+            #     self.reward -= 10
+            for dist in self.laserDistances:
+                if dist < 1:
+                    self.dead = True
+                    self.reward -= 10
 
 
 
@@ -97,5 +119,9 @@ class Car(pygame.sprite.Sprite):
         x -= int(self.image.get_rect().width/2  + self.length*(math.cos(self.angle*3.14/180)))
         y -= int(self.image.get_rect().height/2 - self.length*(math.sin(self.angle*3.14/180)))
         surface.blit(self.image, (x , y))
-        
+        # if self.pointsToMark != []:
+        #     pygame.draw.lines(surface, (255, 255, 255), False, self.pointsToMark)
+        if not self.dead:
+            for point in self.pointsToMark:
+                surface.fill((255, 255, 255), (point, (3, 3)))
 

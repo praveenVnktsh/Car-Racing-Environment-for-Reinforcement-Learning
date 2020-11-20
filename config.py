@@ -7,7 +7,7 @@ class Args():
 
     def __init__(self):
         self.numberOfLasers = 5
-        self.numberOfCars = 20
+        self.numberOfCars = 100
         self.carImagePath = "data/car.png"
         self.trackPath = "data/track.png"
         self.width = 1000
