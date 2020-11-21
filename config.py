@@ -9,9 +9,10 @@ class Args():
         #Environment properties        
         self.carImagePath = "data/car.png"
         self.trackPath = "data/track.png"
-        self.startingPositionX = 118
+        self.startingPositionX = 175
         self.startingPositionY = 435
-        self.cameraHeight = 300
+        self.cameraHeight = 500
+        self.cameraOffset = 50
         self.width = 1500
         self.height = 1500
         self.bgColor = (120, 120, 120)
@@ -19,13 +20,14 @@ class Args():
         #Car properties
         self.anglesToSee = [-50, -25, 0, 25, 50]
         self.numberOfLasers = len(self.anglesToSee)
-        self.maxSteering = 45
-        self.maxAcceleration = 0.1
-        self.maxVelocity = 0.5
-        self.freeDeceleration = 0.
+        self.maxSteering = 10
+        self.maxAcceleration = 0.3
+        self.maxVelocity = 7
+        self.angle = 85
+        self.freeDeceleration = 0.1
         
         # Settings
-        self.numberOfCars = 20
+        self.numberOfCars = 1
         self.render = True
 
 
