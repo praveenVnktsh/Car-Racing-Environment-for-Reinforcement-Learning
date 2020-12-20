@@ -1,8 +1,8 @@
-from car import Car
+from environment.car import Car
 import pygame
 from pygame.math import Vector2
 import numpy as np
-from config import Args, configure
+from environment.config import Args, configure
 import time
 import cv2
 

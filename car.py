@@ -1,7 +1,7 @@
 
 import pygame
 from pygame.math import Vector2
-from config import Args
+from environment.config import Args
 import math
 import numpy as np
 
