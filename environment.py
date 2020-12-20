@@ -10,6 +10,8 @@ class Environment:
     def __init__(self, configs:Args):
         self.exit = False
         pygame.init()  
+        pygame.font.init()  
+        self.myfont = pygame.font.SysFont(configs.font, 15, bold=True)
         self.clock = pygame.time.Clock()
         self.index = 0
         self.config = configs
@@ -20,7 +22,7 @@ class Environment:
         self.cameraPositions = []
         self.cameraPositions.append((self.cameraPosition.x, self.cameraPosition.y))
 
-
+        pygame.event.set_allowed([pygame.QUIT])
         self.image = np.zeros((self.config.width,self.config.height, 3)).astype(np.uint8)
 
         for i in range(self.config.numberOfCars):
@@ -28,24 +30,24 @@ class Environment:
         
         self.draw()
 
-    def step(self, action, render = True):
+    def step(self, action, data = None,  render = True):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit()
-        state = np.zeros((self.config.numberOfCars, self.config.numberOfLasers))
+        state = np.zeros((self.config.numberOfCars, self.config.valueStackSize*(self.config.numberOfLasers + 1)))
         rewards = np.zeros((self.config.numberOfCars,))
         dead = np.zeros((self.config.numberOfCars,))
         
 
-        pressed = pygame.key.get_pressed()
-        if pressed[pygame.K_UP]:
-            action[:, 1] = 1.0
-        if pressed[pygame.K_LEFT]:
-            action[:, 0] = 1.0
-        if pressed[pygame.K_RIGHT]:
-            action[:, 0] = -1.0
-        if pressed[pygame.K_SPACE]:
-            action[:, 2] = 1.0
+        # pressed = pygame.key.get_pressed()
+        # if pressed[pygame.K_UP]:
+        #     action[:, 1] = 1.0
+        # if pressed[pygame.K_LEFT]:
+        #     action[:, 0] = 1.0
+        # if pressed[pygame.K_RIGHT]:
+        #     action[:, 0] = -1.0
+        # if pressed[pygame.K_SPACE]:
+        #     action[:, 2] = 1.0
 
 
         self.index += 1
@@ -54,7 +56,7 @@ class Environment:
         bestCarDistance =  0
         for car in self.cars:
             state[i], dead[i], rewards[i], carDistance = car.update(action[i])
-            if carDistance > bestCarDistance:
+            if (dead[i] != 1.0) and carDistance > bestCarDistance:
                 bestCarDistance = carDistance
                 self.cameraPosition.x = car.position.x - self.config.cameraHeight//2
                 self.cameraPosition.y = car.position.y - self.config.cameraHeight//2
@@ -72,7 +74,7 @@ class Environment:
         self.cameraPosition =Vector2(int(mean[0]), int(mean[1]))
 
         if render:
-            self.draw()
+            self.draw(data)
             if self.config.test:
                 self.clock.tick(30)
         
@@ -91,11 +93,15 @@ class Environment:
     def saveImage(self):
         cv2.imwrite(self.config.saveLocation  + str(self.config.checkpoint) + ' - IMAGE.png', self.image)
     
-    def draw(self):
+    def draw(self, data = None):
+        
         self.screen.fill(self.config.bgColor)
         cropRect = (self.cameraPosition.x, self.cameraPosition.y, self.config.cameraHeight, self.config.cameraHeight)
         self.screen.blit(self.trackImage,(0,0),cropRect)
         
+        
+
+
         for car in self.cars:
             if self.config.test:
                 point = (int(car.genTrackPoint[1]), int(car.genTrackPoint[0]))
@@ -108,6 +114,19 @@ class Environment:
         if self.config.test:
             dilation = cv2.dilate(self.image,np.ones((5,5),np.uint8),iterations = 1)
             cv2.imshow('Track', cv2.resize(dilation, (500, 500)))
+
+        
+        if not data is None:
+            s = pygame.Surface(((len(data.keys())*20 + 35),len(data.keys())*20 + 5), pygame.SRCALPHA)   # per-pixel alpha
+            s.fill((255,255,255,128))  
+            self.screen.blit(s, (0,0))
+            
+            i = 0
+            for key in data.keys():
+                renderedText = self.myfont.render(str(key)+ " : " + str(data[key]), False, (0, 0, 0))
+                self.screen.blit(renderedText,(5,5 + 20*i))
+                i += 1
+
         pygame.display.flip()
          
  

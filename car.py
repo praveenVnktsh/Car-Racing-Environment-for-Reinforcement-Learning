@@ -16,6 +16,7 @@ class Car(pygame.sprite.Sprite):
         self.lastPosition = Vector2(x, y)
         self.velocity = Vector2(0.0, 0.0)
 
+        self.blended = False
 
         self.configs = configs
         self.angle = configs.angle
@@ -49,6 +50,10 @@ class Car(pygame.sprite.Sprite):
         self.pointsToMark = set()
         self.genTrackPoint = (self.carTopPosition.x, self.carTopPosition.y)
         self.trackPoints = set()
+
+
+        #initialize statehistory
+        self.stateHistory = [[0.0 for j in range(configs.numberOfLasers + 1)] for i in range(configs.valueStackSize)]
         
 
     def getPixelAt(self, dist, angleOffset):
@@ -140,9 +145,17 @@ class Car(pygame.sprite.Sprite):
             if self.configs.test: # For marking the track points
                 self.genTrackPoint = (self.carTopPosition.x, self.carTopPosition.y)
 
-        return self.laserDistances, self.dead, self.reward, self.distance
+        self.state = self.laserDistances.copy()
+        self.state.append(float(self.velocity.x/self.maxVelocity))
+        self.stateHistory.pop(0)
+        self.stateHistory.append(self.state)
+
+        return np.array(self.stateHistory).flatten(), self.dead, self.reward, self.distance
     
     def draw(self, surface, cameraPosition):
+        if self.blended == False and self.dead:
+            self.image.fill((100, 0, 0, 255), None, pygame.BLEND_RGBA_MULT)
+            self.blended = True
         surface.blit(self.image, self.position - cameraPosition)
         if not self.dead:
             for point in self.pointsToMark:
