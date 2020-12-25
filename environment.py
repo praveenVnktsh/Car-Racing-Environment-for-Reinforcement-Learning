@@ -54,10 +54,12 @@ class Environment:
 
         i = 0
         bestCarDistance =  0
+        bestCarIndex = 0
         for car in self.cars:
             state[i], dead[i], rewards[i], carDistance = car.update(action[i])
             if (dead[i] != 1.0) and carDistance > bestCarDistance:
                 bestCarDistance = carDistance
+                bestCarIndex = i
                 self.cameraPosition.x = car.position.x - self.config.cameraHeight//2
                 self.cameraPosition.y = car.position.y - self.config.cameraHeight//2
                 if car.angle > 0:
@@ -67,6 +69,7 @@ class Environment:
             i += 1
 
         
+
         if len(self.cameraPositions) > 20:
             self.cameraPositions.pop(0)
         self.cameraPositions.append((self.cameraPosition.x, self.cameraPosition.y))
@@ -78,13 +81,14 @@ class Environment:
             if self.config.test:
                 self.clock.tick(30)
         
-        return state, dead, rewards
+        return state, dead, rewards, bestCarIndex
         
     def reset(self):
         self.cars = pygame.sprite.Group()
         self.cameraPosition = Vector2(self.config.startingPositionX - self.config.cameraHeight//2,self.config.startingPositionY - self.config.cameraHeight//2)
         self.cameraPositions = []
         self.cameraPositions.append((self.cameraPosition.x, self.cameraPosition.y))
+        self.image = np.zeros((self.config.width,self.config.height, 3)).astype(np.uint8)
         for i in range(self.config.numberOfCars):
             self.cars.add(Car(self.config.startingPositionX , self.config.startingPositionY, index = i, configs = self.config, trackImage =  self.trackImage))
         

@@ -1,4 +1,5 @@
 
+
 import pygame
 from pygame.math import Vector2
 from environment.config import Args
@@ -26,6 +27,8 @@ class Car(pygame.sprite.Sprite):
         self.maxVelocity = configs.maxVelocity
         self.maxBraking = configs.maxBraking
         self.freeDeceleration = configs.freeDeceleration
+
+        self.steeringValues = [0.0 for i in range(3)]
 
 
         self.acceleration = 0.0
@@ -75,6 +78,11 @@ class Car(pygame.sprite.Sprite):
             self.velocity.x = max(0, min(self.velocity.x, self.maxVelocity))
 
             self.steering = action[0]*((self.maxSteering - 5)*(1 - (self.velocity.x/self.maxVelocity)) + 5) ##max steering angle should change with speed
+            self.steeringValues.append(self.steering)
+
+            self.steeringValues.pop(0)
+            self.steering = np.average(self.steeringValues)
+
 
             if self.steering:
                 turning_radius = self.length / math.sin(math.radians(self.steering))
